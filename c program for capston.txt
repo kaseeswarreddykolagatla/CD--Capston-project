@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define POOL_SIZE 1024
+char memory_pool[POOL_SIZE];
+size_t pool_index = 0;
+void* pool_alloc(size_t size) {
+    if (pool_index + size <= POOL_SIZE) {
+        void* ptr = &memory_pool[pool_index];
+        pool_index += size;
+        return ptr;
+    } else {
+        return NULL; 
+    }
+}
+typedef struct {
+    int id;
+    char name[50];
+} Record;
+Record* create_record(int id, const char* name) {
+    Record* new_record = (Record*)malloc(sizeof(Record));
+    if (new_record != NULL) {
+        new_record->id = id;
+        strncpy(new_record->name, name, sizeof(new_record->name));
+    }
+    return new_record;
+}
+Record* create_record_pool(int id, const char* name) {
+    Record* new_record = (Record*)pool_alloc(sizeof(Record));
+    if (new_record != NULL) {
+        new_record->id = id;
+        strncpy(new_record->name, name, sizeof(new_record->name));
+    }
+    return new_record;
+}
+void reset_memory_pool() {
+    pool_index = 0;
+}
+int main() {
+    Record* record1 = create_record(1, "Dynamic Memory Record");
+    if (record1 != NULL) {
+        printf("Record 1: ID=%d, Name=%s\n", record1->id, record1->name);
+        free(record1); 
+    } else {
+        printf("Failed to allocate memory for record1\n");
+    }
+    Record* record2 = create_record_pool(2, "Pooled Memory Record");
+    if (record2 != NULL) {
+        printf("Record 2: ID=%d, Name=%s\n", record2->id, record2->name);
+    } else {
+        printf("Failed to allocate memory from pool for record2\n");
+    }
+    reset_memory_pool();
+    printf("Memory pool reset.\n");
+    Record* record3 = create_record_pool(3, "Pooled Memory Record After Reset");
+    if (record3 != NULL) {
+        printf("Record 3: ID=%d, Name=%s\n", record3->id, record3->name);
+    } else {
+        printf("Failed to allocate memory from pool for record3\n");
+    }
+
+    return 0;
+}
